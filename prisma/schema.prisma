@@ -1,0 +1,69 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = env("DB_PROVIDER"); url = env("DATABASE_URL") }
+enum Role { CLIENT PARTNER ADMIN }
+enum AreaLevel { CITY DEPT REGION COUNTRY }
+enum Status { DRAFT PUBLISHED ARCHIVED }
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  name String?
+  password String
+  role Role @default(CLIENT)
+  areaId String?
+  area Area? @relation(fields:[areaId], references:[id])
+  createdAt DateTime @default(now())
+  bookings Booking[]
+  experiences Experience[] @relation("OwnerExperiences")
+}
+model Area {
+  id String @id @default(cuid())
+  name String
+  slug String @unique
+  level AreaLevel
+  parentId String?
+  parent Area? @relation("AreaHierarchy", fields:[parentId], references:[id])
+  children Area[] @relation("AreaHierarchy")
+  users User[]
+  experiences Experience[]
+}
+model Experience {
+  id String @id @default(cuid())
+  title String
+  slug String @unique
+  short String
+  description String
+  category String
+  city String?
+  status Status @default(DRAFT)
+  ownerId String?
+  owner User? @relation("OwnerExperiences", fields:[ownerId], references:[id])
+  areaId String?
+  area Area? @relation(fields:[areaId], references:[id])
+  image String?
+  price String?
+  duration String?
+  level String?
+  bookingUrl String?
+  createdAt DateTime @default(now())
+  timeSlots TimeSlot[]
+  bookings Booking[]
+}
+model TimeSlot {
+  id String @id @default(cuid())
+  experienceId String
+  experience Experience @relation(fields:[experienceId], references:[id])
+  start DateTime
+  end DateTime
+  capacity Int @default(8)
+  booked Int @default(0)
+}
+model Booking {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields:[userId], references:[id])
+  experienceId String
+  experience Experience @relation(fields:[experienceId], references:[id])
+  timeSlotId String?
+  timeSlot TimeSlot? @relation(fields:[timeSlotId], references:[id])
+  createdAt DateTime @default(now())
+}
